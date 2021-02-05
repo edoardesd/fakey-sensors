@@ -5,112 +5,112 @@ import string
 
 from random import randrange
 
+COLORS = ['warm_yellow', 'cold_yellow', 'warm_white', 'cold_white', 'red', 'blue', 'green']
+BROKER = os.getenv('SENS_BROKER', 'localhost')
+PORT = os.getenv('SENS_PORT', 1883)
+NAME = os.getenv('SENS_NAME', 'bulb0')
+ROOM = os.getenv('SENS_ROOM', 'room0')
+FLOOR = os.getenv('SENS_FLOOR', 'floor0')
 
-COLORS = ['warm_yellow', 'cold_yellow', 'warm_white', 'cold_withe', 'red', 'blue', 'green']
+base_topic = "crazy_building/{}/{}/{}/".format(
+    FLOOR, ROOM, NAME)
+
+
+def gen_intensity():
+    return {"status": {"dim": random.randrange(0, 100)},
+            "timestamp": time.time()}
+
+
+def gen_color():
+    return {"status": {"color": random.choice(COLORS)},
+            "timestamp": time.time()}
+
+
+def gen_toogle():
+    return {"status": {"switch": random.choice(["ON", "OFF"])},
+            "timestamp": time.time()}
+
+
+def gen_update_all():
+    return {"status": {
+        "switch": 'ON',
+        "dim": random.randrange(0, 100),
+        "color": random.choice(COLORS)},
+        "timestamp": time.time()}
+
+
+def turn_off():
+    return {"status":
+                {"switch": 'OFF',
+                 "dim": 0,
+                 "color": None},
+            "timestamp": time.time()}
+
+
+def turn_on():
+    return {"status":
+                {"switch": 'ON',
+                 "dim": 50,
+                 "color": COLORS[0]},
+            "timestamp": time.time()}
+
+
+def get_info():
+    print("Sensor name:", NAME)
+    print("\tRoom:", ROOM)
+    print("\tFoor:", FLOOR)
+    print()
+    print("\tBroker address: {}:{}".format(BROKER, PORT))
+
+
+def generate_ID():
+    return 'CL-' + \
+           FLOOR[::len(FLOOR) - 1] + '-' + ROOM[::len(ROOM) - 1] + '-' + \
+           NAME + \
+           ''.join(random.choice(string.ascii_lowercase) for i in range(randrange(5, 15)))
+
+
+actions = {"switch": gen_toogle,
+           "set_on": turn_on,
+           "set_off": turn_off,
+           "dim": gen_intensity,
+           "color": gen_color,
+           "combo": gen_update_all}
+
 
 class Sensor:
     def __init__(self):
-        self.name = os.getenv('SENS_NAME', 'bulb0')
-        self.room = os.getenv('SENS_ROOM', 'room0')
-        self.floor = os.getenv('SENS_FLOOR', 'floor0')
+        self.client_id = generate_ID()
 
-        self.base_topic = "crazy_building/{}/{}/{}/".format(
-            self.floor, self.room, self.name)
+        self.name = NAME
+        self.room = ROOM
+        self.floor = FLOOR
 
-        self.broker = os.getenv('SENS_BROKER', 'localhost')
-        self.port = os.getenv('SENS_PORT', 1883)
+        self.broker = BROKER
+        self.port = PORT
+        self.base_topic = base_topic
 
         self.topic_passive = {'consumption': {'interval': 20,
                                               'return': self.get_consumption},
                               'status': {'interval': 10,
                                          'return': self.get_status}}
 
-        self.switch = 'OFF'
-        self.dim = 0
-        self.color = None
+        self.actions = actions
 
-        self.actions = {'switch': self.toogle,
-                        'set_on': self.turn_on,
-                        'set_off': self.turn_off,
-                        'dim': self.set_intensity,
-                        'color': self.set_color,
-                        'combo': self.update_all}
-
-        self.seconds_on = 0
-
-        self.client_id = self.generate_ID()
-
-    def set_intensity(self):
-        new_dim = random.randrange(0, 100)
-        if self.dim == new_dim:
-            return self.set_intensity()
-        else:
-            self.dim = new_dim
-            return {'dim': self.dim,
-                    'timestamp': time.time()}
-
-
-    def set_color(self):
-        new_color = random.choice(COLORS)
-        if self.color == new_color:
-            return self.set_color()
-        else:
-            self.color = new_color
-            return {'color': self.color,
-                    'timestamp': time.time()}
-
-    def update_all(self):
-        self.switch = 'ON'
-        self.set_intensity()
-        self.set_color()
-
-        return self.get_status()
-
-    def toogle(self):
-        if 'ON' in self.switch:
-            self.switch = 'OFF'
-        if 'OFF' in self.switch:
-            self.switch = 'ON'
-
-        return {'switch': self.switch,
-                'timestamp': time.time()
-                }
-
-    def generate_ID(self):
-        return 'CL-' + \
-               self.floor[::len(self.floor) - 1] + '-' + self.room[::len(self.room) - 1] + '-' + \
-               self.name + \
-               ''.join(random.choice(string.ascii_lowercase) for i in range(randrange(5, 15)))
-
-    def get_info(self):
-        print("Sensor name:", self.name)
-        print("\tRoom:", self.room)
-        print("\tFoor:", self.floor)
-        print()
-        print("\tBroker address: {}:{}".format(self.broker, self.port))
+        self.status = {
+            "switch": 'OFF',
+            "dim": 0,
+            "color": None}
 
     def get_consumption(self):
-        return {'consumption_overall': random.randrange(100, 100000),
-                'consumption_last_hour': random.randrange(1, 1000),
-                'timestamp': time.time()}
+        return {"consumption_overall": random.randrange(100, 100000),
+                "consumption_last_hour": random.randrange(1, 1000),
+                "timestamp": time.time()}
 
     def get_status(self):
-        return {'switch': self.switch,
-                'dim': self.dim,
-                'color': self.color,
-                'timestamp': time.time()
-                }
+        return {"status": self.status,
+                "timestamp": time.time()}
 
-    def turn_off(self):
-        self.switch = 'OFF'
-        self.dim = 0
-        self.color = None
-
-        return self.get_status()
-
-    def turn_on(self):
-        self.switch = 'ON'
-        self.dim = 50
-        self.color = COLORS[0]
-
-        return self.get_status()
+    def store_update(self, _update):
+        for key, value in _update.items():
+            self.status[key] = value

@@ -1,16 +1,27 @@
+import json
+import os
+
 import paho.mqtt.client as mqtt
 import threading
 import sensor as s
 import random
 
 
-def do_action(_client, _sensor):
-    action = random.choice(list(_sensor.actions.keys()))
-    print(action)
-    _topic = sensor.base_topic + 'action/' + action
-    _client.publish(_topic, str(sensor.actions[action]()))
-    print("PUB: {}".format(_topic))
-    _kwargs = {'_client': _client, '_sensor': _sensor}
+#def do_toogle(self):
+#    if "ON" in self.status["switch"]:
+#        self.status["switch"] = "OFF"
+#    if "OFF" in self.status["switch"]:
+#        self.status["switch"] = "ON"
+
+
+
+
+def do_action(_client):
+    action = random.choice(list(s.actions.keys()))
+    _topic = s.base_topic + 'action/' + action
+    _client.publish(_topic, json.dumps(s.actions[action]()))
+    print("PUB: {} {}".format(_topic, json.dumps(s.actions[action]())))
+    _kwargs = {'_client': _client}
     threading.Timer(random.randrange(2, 10), do_action, kwargs=_kwargs).start()
 
 
@@ -19,30 +30,26 @@ def on_message(client, userdata, msg):
 
 
 def main():
-    client = mqtt.Client(sensor.client_id)
+    client = mqtt.Client(s.generate_ID())
     print("Publisher")
     client.on_message = on_message
 
-    print("connecting to the broker", sensor.broker)
-    client.connect(sensor.broker)
+    print("connecting to the broker", s.BROKER)
+    client.connect(s.BROKER)
 
-    #for topic, interval in sensor.topic_passive.items():
-    #    client.subscribe(sensor.base_topic + topic)
-        # add subscribe log
-
-
-    #for topic, info in sensor.topic_passive.items():
-    #    publish_update(client, topic, info)
-
-    do_action(client, sensor)
+    # periodic update
+    do_action(client)
 
     client.loop_start()
 
 
 if __name__ == "__main__":
-    sensor = s.Sensor()
+    #sensor = s.Sensor()
     print("+++ PUBLISHER +++")
-    sensor.get_info()
+    name = os.getenv('SENS_NAME', 'bulb0')
+    room = os.getenv('SENS_ROOM', 'room0')
+    floor = os.getenv('SENS_FLOOR', 'floor0')
+    s.get_info()
     main()
 
 #while True:

@@ -1,3 +1,4 @@
+import json
 import paho.mqtt.client as mqtt
 import threading
 import sensor as s
@@ -11,7 +12,8 @@ def publish_update(_client, _topic, _info):
 
 
 def on_message(client, userdata, msg):
-    print("{} {}", msg.topic, msg.payload.decode("utf-8", "ignore"))
+    print("received {} {}".format(msg.topic, msg.payload.decode("utf-8", "ignore")))
+    sensor.store_update(dict(json.loads(msg.payload.decode("utf-8")))["status"])
 
 
 def main():
@@ -21,8 +23,8 @@ def main():
     print("connecting to the broker", sensor.broker)
     client.connect(sensor.broker)
 
-    #for topic, interval in sensor.topic_passive.items():
-    #    client.subscribe(sensor.base_topic + topic)
+    for topic in sensor.actions.keys():
+        client.subscribe(sensor.base_topic + 'action/' + topic)
         # add subscribe log
 
     for topic, info in sensor.topic_passive.items():
@@ -34,7 +36,7 @@ def main():
 if __name__ == "__main__":
     sensor = s.Sensor()
     print("+++ SUBSCRIBER +++")
-    sensor.get_info()
+    s.get_info()
     main()
 
 #while True:
