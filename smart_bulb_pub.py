@@ -1,13 +1,17 @@
 import paho.mqtt.client as mqtt
 import threading
 import sensor as s
+import random
 
 
-def publish_update(_client, _topic, _info):
-    _client.publish(sensor.base_topic + _topic, str(_info['return']()))
+def do_action(_client, _sensor):
+    action = random.choice(list(_sensor.actions.keys()))
+    print(action)
+    _topic = sensor.base_topic + 'action/' + action
+    _client.publish(_topic, str(sensor.actions[action]()))
     print("PUB: {}".format(_topic))
-    _kwargs = {'_client': _client, '_topic': _topic, '_info': _info}
-    threading.Timer(_info['interval'], publish_update, kwargs=_kwargs).start()
+    _kwargs = {'_client': _client, '_sensor': _sensor}
+    threading.Timer(random.randrange(2, 10), do_action, kwargs=_kwargs).start()
 
 
 def on_message(client, userdata, msg):
@@ -16,6 +20,7 @@ def on_message(client, userdata, msg):
 
 def main():
     client = mqtt.Client(sensor.client_id)
+    print("Publisher")
     client.on_message = on_message
 
     print("connecting to the broker", sensor.broker)
@@ -25,15 +30,18 @@ def main():
     #    client.subscribe(sensor.base_topic + topic)
         # add subscribe log
 
-    for topic, info in sensor.topic_passive.items():
-        publish_update(client, topic, info)
+
+    #for topic, info in sensor.topic_passive.items():
+    #    publish_update(client, topic, info)
+
+    do_action(client, sensor)
 
     client.loop_start()
 
 
 if __name__ == "__main__":
     sensor = s.Sensor()
-    print("+++ SUBSCRIBER +++")
+    print("+++ PUBLISHER +++")
     sensor.get_info()
     main()
 
