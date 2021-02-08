@@ -2,8 +2,8 @@ import time
 import os
 import random
 import string
-
-from random import randrange
+import datetime
+from random import randrange, expovariate
 
 COLORS = ['warm_yellow', 'cold_yellow', 'warm_white', 'cold_white', 'red', 'blue', 'green']
 BROKER = os.getenv('SENS_BROKER', 'localhost')
@@ -11,9 +11,16 @@ PORT = os.getenv('SENS_PORT', 1883)
 NAME = os.getenv('SENS_NAME', 'bulb0')
 ROOM = os.getenv('SENS_ROOM', 'room0')
 FLOOR = os.getenv('SENS_FLOOR', 'floor0')
+T_PROFILE = os.getenv('T_PROFILE', 'busy')
 
 base_topic = "crazy_building/{}/{}/{}/".format(
     FLOOR, ROOM, NAME)
+
+off_on_trans_rates = {"busy": 30, "steady": 30}
+on_off_trans_rates = {'busy': 30, 'steady': 5}
+hourly_rates = [4.06, 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06, 1.32, 0.33, 0.08, 0.08, 0.33, 1.32, 4.06,
+                9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06]
+
 
 
 def gen_intensity():
@@ -102,6 +109,9 @@ class Sensor:
             "dim": 0,
             "color": None}
 
+        self.off_on_rate = off_on_trans_rates[T_PROFILE]
+        self.on_off_rate = on_off_trans_rates[T_PROFILE]
+
     def get_consumption(self):
         return {"consumption_overall": random.randrange(100, 100000),
                 "consumption_last_hour": random.randrange(1, 1000),
@@ -114,3 +124,17 @@ class Sensor:
     def store_update(self, _update):
         for key, value in _update.items():
             self.status[key] = value
+
+    def get_off_on_rate(self):
+        return self.off_on_rate
+
+    def get_on_off_rate(self):
+        return self.on_off_rate
+
+    def draw_off_sojourn(self):
+        now = datetime.datetime.now()
+        return random.expovariate(1/(self.off_on_rate * hourly_rates[now.hour]))
+
+    def draw_on_sojourn(self):
+        now = datetime.datetime.now()
+        return random.expovariate(1 / (self.on_off_rate * hourly_rates[now.hour]))

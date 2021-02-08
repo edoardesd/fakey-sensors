@@ -25,6 +25,27 @@ def do_action(_client):
     threading.Timer(random.randrange(2, 10), do_action, kwargs=_kwargs).start()
 
 
+def toggle_as_markov(_client, sn):
+    toggle_status = sn.status['switch']
+    # set action,topic and draw sojourn time
+    if toggle_status == "OFF":
+        action = s.actions['set_on']
+        _topic = s.base_topic + 'action/' + 'set_on'
+        sn.store_update({'switch': 'on'})
+        interval = sn.draw_on_sojourn()
+        print("Will stay on for "  + str(interval/60) + " minutes")
+    else:
+        action = s.actions['set_off']
+        _topic = s.base_topic + 'action/' + 'set_off'
+        sn.store_update({'switch': 'on'})
+        interval = sn.draw_off_sojourn()
+        print("Will stay off for " + str(interval/60) + " minutes")
+
+    # execute action and schedule next
+    _client.publish(_topic, json.dumps(s.actions[action]()))
+    threading.Timer(interval, toggle_as_markov, [_client, sn]).start()
+
+
 def on_message(client, userdata, msg):
     print("{} {}", msg.topic, msg.payload.decode("utf-8", "ignore"))
 
@@ -40,15 +61,21 @@ def main():
     # periodic update
     do_action(client)
 
+    # on off toggling
+    toggle_as_markov(client, sensor)
+
     client.loop_start()
 
 
 if __name__ == "__main__":
-    #sensor = s.Sensor()
+    sensor = s.Sensor()
     print("+++ PUBLISHER +++")
     name = os.getenv('SENS_NAME', 'bulb0')
     room = os.getenv('SENS_ROOM', 'room0')
     floor = os.getenv('SENS_FLOOR', 'floor0')
+
+    isOn = False
+
     s.get_info()
     main()
 
