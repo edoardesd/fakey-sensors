@@ -18,6 +18,8 @@ base_topic = "crazy_building/{}/{}/{}/".format(
 
 off_on_trans_rates = {"busy": 30, "steady": 30}
 on_off_trans_rates = {'busy': 30, 'steady': 5}
+dim_trans_rates = {'busy': 10, 'steady': 5}
+
 hourly_rates = [4.06, 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06, 1.32, 0.33, 0.08, 0.08, 0.33, 1.32, 4.06,
                 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06]
 
@@ -77,6 +79,21 @@ def generate_ID():
            ''.join(random.choice(string.ascii_lowercase) for i in range(randrange(5, 15)))
 
 
+def draw_dim_sojourn():
+    now = datetime.datetime.now()
+    return random.expovariate(1 / (dim_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
+
+
+def draw_off_sojourn():
+    now = datetime.datetime.now()
+    return random.expovariate(1 / (off_on_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
+
+
+def draw_on_sojourn():
+    now = datetime.datetime.now()
+    return random.expovariate(1 / (on_off_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
+
+
 actions = {"switch": gen_toogle,
            "set_on": turn_on,
            "set_off": turn_off,
@@ -109,9 +126,6 @@ class Sensor:
             "dim": 0,
             "color": None}
 
-        self.off_on_rate = off_on_trans_rates[T_PROFILE]
-        self.on_off_rate = on_off_trans_rates[T_PROFILE]
-
     def get_consumption(self):
         return {"consumption_overall": random.randrange(100, 100000),
                 "consumption_last_hour": random.randrange(1, 1000),
@@ -131,10 +145,3 @@ class Sensor:
     def get_on_off_rate(self):
         return self.on_off_rate
 
-    def draw_off_sojourn(self):
-        now = datetime.datetime.now()
-        return random.expovariate(1/(self.off_on_rate * hourly_rates[now.hour]))
-
-    def draw_on_sojourn(self):
-        now = datetime.datetime.now()
-        return random.expovariate(1 / (self.on_off_rate * hourly_rates[now.hour]))

@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import paho.mqtt.client as mqtt
 import threading
@@ -25,25 +26,41 @@ def do_action(_client):
     threading.Timer(random.randrange(2, 10), do_action, kwargs=_kwargs).start()
 
 
-def toggle_as_markov(_client, sn):
-    toggle_status = sn.status['switch']
-    # set action,topic and draw sojourn time
-    if toggle_status == "OFF":
-        action = s.actions['set_on']
-        _topic = s.base_topic + 'action/' + 'set_on'
-        sn.store_update({'switch': 'on'})
-        interval = sn.draw_on_sojourn()
-        print("Will stay on for "  + str(interval/60) + " minutes")
+def dim_as_markov(_client):
+    global isOn
+    if isOn:
+        action = 'dim'
+        _topic = s.base_topic + 'action/' + action
+        _client.publish(_topic, json.dumps(s.actions[action]()))
     else:
-        action = s.actions['set_off']
-        _topic = s.base_topic + 'action/' + 'set_off'
-        sn.store_update({'switch': 'on'})
-        interval = sn.draw_off_sojourn()
+        # do nothing if the light is off
+        print("Light is off, can't dim")
+
+    # but prepare a new dim event
+    interval = s.draw_dim_sojourn()
+    print("Might change intensity in {} minutes".format(interval / 60))
+    threading.Timer(interval, dim_as_markov, [_client]).start()
+
+
+def toggle_as_markov(_client):
+    global isOn
+    # set action,topic and draw sojourn time
+    if not isOn:
+        isOn = True
+        action = random.choice(['set_on', 'combo'])
+        _topic = s.base_topic + 'action/' + action
+        interval = s.draw_on_sojourn()
+        print("Will stay on for " + str(interval/60) + " minutes")
+    else:
+        isOn = False
+        action = 'set_off'
+        _topic = s.base_topic + 'action/' + action
+        interval = s.draw_off_sojourn()
         print("Will stay off for " + str(interval/60) + " minutes")
 
     # execute action and schedule next
     _client.publish(_topic, json.dumps(s.actions[action]()))
-    threading.Timer(interval, toggle_as_markov, [_client, sn]).start()
+    threading.Timer(interval, toggle_as_markov, [_client]).start()
 
 
 def on_message(client, userdata, msg):
@@ -52,19 +69,19 @@ def on_message(client, userdata, msg):
 
 def main():
     client = mqtt.Client(s.generate_ID())
-    print("Publisher")
     client.on_message = on_message
 
-    print("connecting to the broker", s.BROKER)
     client.connect(s.BROKER)
+    print("Connected.")
 
     # periodic update
-    do_action(client)
-
-    # on off toggling
-    toggle_as_markov(client, sensor)
+    #do_action(client)
 
     client.loop_start()
+
+    # on off toggling
+    toggle_as_markov(client)
+    dim_as_markov(client)
 
 
 if __name__ == "__main__":
@@ -77,6 +94,7 @@ if __name__ == "__main__":
     isOn = False
 
     s.get_info()
+
     main()
 
 #while True:
