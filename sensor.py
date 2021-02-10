@@ -18,50 +18,51 @@ base_topic = "crazy_building/{}/{}/{}/".format(
 
 off_on_trans_rates = {"busy": 30, "steady": 30}
 on_off_trans_rates = {'busy': 30, 'steady': 5}
-dim_trans_rates = {'busy': 10, 'steady': 5}
+dim_trans_rates = {'busy': 5, 'steady': 2}
+color_trans_rates = {'busy': 3, 'steady': 1}
 
 hourly_rates = [4.06, 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06, 1.32, 0.33, 0.08, 0.08, 0.33, 1.32, 4.06,
                 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06]
 
 
 
-def gen_intensity():
+def gen_intensity(timestamp):
     return {"status": {"dim": random.randrange(0, 100)},
-            "timestamp": time.time()}
+            "timestamp": str(timestamp)}
 
 
-def gen_color():
+def gen_color(timestamp):
     return {"status": {"color": random.choice(COLORS)},
-            "timestamp": time.time()}
+            "timestamp": str(timestamp)}
 
 
-def gen_toogle():
+def gen_toogle(timestamp):
     return {"status": {"switch": random.choice(["ON", "OFF"])},
-            "timestamp": time.time()}
+            "timestamp": str(timestamp)}
 
 
-def gen_update_all():
+def gen_update_all(timestamp):
     return {"status": {
         "switch": 'ON',
         "dim": random.randrange(0, 100),
         "color": random.choice(COLORS)},
-        "timestamp": time.time()}
+        "timestamp": str(timestamp)}
 
 
-def turn_off():
+def turn_off(timestamp):
     return {"status":
                 {"switch": 'OFF',
                  "dim": 0,
                  "color": None},
-            "timestamp": time.time()}
+            "timestamp": str(timestamp)}
 
 
-def turn_on():
+def turn_on(timestamp):
     return {"status":
                 {"switch": 'ON',
                  "dim": 50,
                  "color": COLORS[0]},
-            "timestamp": time.time()}
+            "timestamp": str(timestamp)}
 
 
 def get_info():
@@ -79,19 +80,24 @@ def generate_ID():
            ''.join(random.choice(string.ascii_lowercase) for i in range(randrange(5, 15)))
 
 
-def draw_dim_sojourn():
-    now = datetime.datetime.now()
+def draw_dim_sojourn(timestamp):
+    now = timestamp
     return random.expovariate(1 / (dim_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
 
 
-def draw_off_sojourn():
-    now = datetime.datetime.now()
+def draw_off_sojourn(timestamp):
+    now = timestamp
     return random.expovariate(1 / (off_on_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
 
 
-def draw_on_sojourn():
-    now = datetime.datetime.now()
+def draw_on_sojourn(timestamp):
+    now = timestamp
     return random.expovariate(1 / (on_off_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
+
+
+def draw_color_sojourn(timestamp):
+    now = timestamp
+    return random.expovariate(1 / (color_trans_rates[T_PROFILE] * hourly_rates[now.hour]))
 
 
 actions = {"switch": gen_toogle,
