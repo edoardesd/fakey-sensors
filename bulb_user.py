@@ -8,7 +8,7 @@ import random
 import simpy.rt
 import sensor as s
 
-SIM_FACTOR = .01
+SIM_FACTOR = 0.1
 
 
 def on_message(client, userdata, msg):
@@ -57,8 +57,8 @@ def toggle_as_markov(env, _client, _ts):
         # execute action and wait until next
         _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
 
-        print("{} - Light is {}".format(sim_time, 'on' if light_status else 'off'))
-        print("Will stay {} for {:.1f} real seconds that are {:.4f} sim seconds".format('on' if light_status else 'off', interval, interval*(SIM_FACTOR)))
+        print("{} - Turning {} the light. Next event in {:.1f} seconds (simulated)".format(sim_time, 'ON' if light_status else 'OFF', interval*(SIM_FACTOR)))
+        #print("Will stay {} for {:.1f} real seconds that are {:.4f} sim seconds".format('on' if light_status else 'off', interval, interval*(SIM_FACTOR)))
 
         yield env.timeout(interval)
 
@@ -72,9 +72,11 @@ def dim_as_markov(env, _client, _ts):
             action = 'dim'
             _topic = s.base_topic + 'action/' + action
             _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
+            print("{} - Changing intensity of the light.".format(sim_time))
         else:
             # do nothing if the light is off
-            print("Light is off, can't dim")
+            #print("Light is off, can't dim")
+            pass
 
         # but prepare a new dim event
         interval = s.draw_dim_sojourn(sim_time)
@@ -91,9 +93,12 @@ def color_as_markow(env, _client, _ts):
             action = 'color'
             _topic = s.base_topic + 'action/' + action
             _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
+            print("{} - Changing color of the light.".format(sim_time))
+
         else:
             # do nothing is the light is off
-            print("Color is already off, can't change it")
+            #print("Color is already off, can't change it")
+            pass
 
         # but prepare a new color event
         interval = s.draw_color_sojourn(sim_time)

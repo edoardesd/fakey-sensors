@@ -18,8 +18,8 @@ base_topic = "crazy_building/{}/{}/{}/".format(
 
 off_on_trans_rates = {"busy": 30, "steady": 30}
 on_off_trans_rates = {'busy': 30, 'steady': 5}
-dim_trans_rates = {'busy': 5, 'steady': 2}
-color_trans_rates = {'busy': 3, 'steady': 1}
+dim_trans_rates = {'busy': 40, 'steady': 50}
+color_trans_rates = {'busy': 40, 'steady': 60}
 
 hourly_rates = [4.06, 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06, 1.32, 0.33, 0.08, 0.08, 0.33, 1.32, 4.06,
                 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06]
