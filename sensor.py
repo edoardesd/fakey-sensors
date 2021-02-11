@@ -1,4 +1,3 @@
-import time
 import os
 import random
 import string
@@ -11,6 +10,10 @@ PORT = os.getenv('SENS_PORT', 1883)
 NAME = os.getenv('SENS_NAME', 'bulb0')
 ROOM = os.getenv('SENS_ROOM', 'room0')
 FLOOR = os.getenv('SENS_FLOOR', 'floor0')
+SIM_FACTOR = os.getenv('SIM_FACTOR', 0.1)
+# for infinite duration use 'inf'
+SIM_DURATION = os.getenv('SIM_DURATION', 480)
+
 T_PROFILE = os.getenv('T_PROFILE', 'busy')
 
 base_topic = "crazy_building/{}/{}/{}/".format(
@@ -18,12 +21,11 @@ base_topic = "crazy_building/{}/{}/{}/".format(
 
 off_on_trans_rates = {"busy": 30, "steady": 30}
 on_off_trans_rates = {'busy': 30, 'steady': 5}
-dim_trans_rates = {'busy': 40, 'steady': 50}
-color_trans_rates = {'busy': 40, 'steady': 60}
+dim_trans_rates = {'busy': 80, 'steady': 200}
+color_trans_rates = {'busy': 80, 'steady': 200}
 
 hourly_rates = [4.06, 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06, 1.32, 0.33, 0.08, 0.08, 0.33, 1.32, 4.06,
                 9.74, 18.20, 26.47, 30.00, 26.47, 18.20, 9.74, 4.06]
-
 
 
 def gen_intensity(timestamp):
@@ -66,10 +68,12 @@ def turn_on(timestamp):
 
 
 def get_info():
-    print("Sensor name:", NAME)
-    print("\tRoom:", ROOM)
-    print("\tFoor:", FLOOR)
+    print("Simulation duration: ", SIM_DURATION)
+    print("Speed: {}x".format(SIM_FACTOR*100))
+    # Not sure about that
+    print("\tOne minute in the simulation corresponds to {} seconds in real life.".format(SIM_FACTOR*60))
     print()
+    print("Sensor base topic `{}`".format(base_topic))
     print("\tBroker address: {}:{}".format(BROKER, PORT))
 
 
@@ -120,9 +124,9 @@ class Sensor:
         self.port = PORT
         self.base_topic = base_topic
 
-        self.topic_passive = {'consumption': {'interval': 20,
+        self.topic_passive = {'consumption': {'interval': 1000,
                                               'return': self.get_consumption},
-                              'status': {'interval': 10,
+                              'status': {'interval': 500,
                                          'return': self.get_status}}
 
         self.actions = actions
@@ -132,14 +136,15 @@ class Sensor:
             "dim": 0,
             "color": None}
 
-    def get_consumption(self):
+
+    def get_consumption(self, timestamp):
         return {"consumption_overall": random.randrange(100, 100000),
                 "consumption_last_hour": random.randrange(1, 1000),
-                "timestamp": time.time()}
+                "timestamp": str(timestamp)}
 
-    def get_status(self):
+    def get_status(self, timestamp):
         return {"status": self.status,
-                "timestamp": time.time()}
+                "timestamp": str(timestamp)}
 
     def store_update(self, _update):
         for key, value in _update.items():

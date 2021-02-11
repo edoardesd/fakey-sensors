@@ -1,14 +1,10 @@
 import datetime
 import json
 import os
-import time
-
 import paho.mqtt.client as mqtt
 import random
 import simpy.rt
 import sensor as s
-
-SIM_FACTOR = 0.1
 
 
 def on_message(client, userdata, msg):
@@ -16,11 +12,9 @@ def on_message(client, userdata, msg):
 
 
 def main():
-    #starting_time = time.strftime('%Y-%m-%d %H:%M:%S',  datetime.datetime.now().timestamp())
     starting_time = datetime.datetime.now()
-    #print("Simulation started at {}".format(time.strftime("%Y-%m-%d %H:%M:%S", starting_time)))
     print("Simulation started at {}".format(starting_time))
-    env = simpy.rt.RealtimeEnvironment(factor=SIM_FACTOR)
+    env = simpy.rt.RealtimeEnvironment(factor=s.SIM_FACTOR)
 
     client = mqtt.Client(s.generate_ID())
     client.on_message = on_message
@@ -30,9 +24,8 @@ def main():
 
     env.process(toggle_as_markov(env, client, starting_time))
     env.process(dim_as_markov(env, client, starting_time))
-    env.process(color_as_markow(env, client, starting_time))
-    env.run(until=480)
-
+    env.process(color_as_markov(env, client, starting_time))
+    env.run(until=float(s.SIM_DURATION))
 
     print("Simulation complete")
 
@@ -47,18 +40,17 @@ def toggle_as_markov(env, _client, _ts):
             light_status = True
             action = random.choice(['set_on', 'combo'])
             _topic = s.base_topic + 'action/' + action
-            interval = s.draw_on_sojourn(sim_time)
+            interval = s.draw_on_sojourn(sim_time) * 60
         else:
             light_status = False
             action = 'set_off'
             _topic = s.base_topic + 'action/' + action
-            interval = s.draw_off_sojourn(sim_time)
+            interval = s.draw_off_sojourn(sim_time) * 60
 
         # execute action and wait until next
         _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
 
-        print("{} - Turning {} the light. Next event in {:.1f} seconds (simulated)".format(sim_time, 'ON' if light_status else 'OFF', interval*(SIM_FACTOR)))
-        #print("Will stay {} for {:.1f} real seconds that are {:.4f} sim seconds".format('on' if light_status else 'off', interval, interval*(SIM_FACTOR)))
+        print("{} - Turning {} the light. Next event in {:.1f} seconds (simulated)".format(sim_time.replace(microsecond=0), 'ON' if light_status else 'OFF', interval*(s.SIM_FACTOR)))
 
         yield env.timeout(interval)
 
@@ -72,19 +64,19 @@ def dim_as_markov(env, _client, _ts):
             action = 'dim'
             _topic = s.base_topic + 'action/' + action
             _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
-            print("{} - Changing intensity of the light.".format(sim_time))
+            print("{} - Changing intensity of the light.".format(sim_time.replace(microsecond=0)))
         else:
             # do nothing if the light is off
-            #print("Light is off, can't dim")
+            # print("Light is off, can't dim")
             pass
 
         # but prepare a new dim event
-        interval = s.draw_dim_sojourn(sim_time)
-        print("Might change intensity in {:.1f} real seconds that are {:.4f} sim seconds".format(interval, interval*(SIM_FACTOR)))
+        interval = s.draw_dim_sojourn(sim_time) * 60
+        #print("Might change intensity in {:.1f} real seconds that are {:.4f} sim seconds".format(interval, interval*(SIM_FACTOR)))
         yield env.timeout(interval)
 
 
-def color_as_markow(env, _client, _ts):
+def color_as_markov(env, _client, _ts):
     global light_status
     while True:
         sim_time = _ts + datetime.timedelta(seconds=env.now)
@@ -93,25 +85,22 @@ def color_as_markow(env, _client, _ts):
             action = 'color'
             _topic = s.base_topic + 'action/' + action
             _client.publish(_topic, json.dumps(s.actions[action](sim_time)))
-            print("{} - Changing color of the light.".format(sim_time))
+            print("{} - Changing color of the light.".format(sim_time.replace(microsecond=0)))
 
         else:
             # do nothing is the light is off
-            #print("Color is already off, can't change it")
+            # print("Color is already off, can't change it")
             pass
 
         # but prepare a new color event
-        interval = s.draw_color_sojourn(sim_time)
+        interval = s.draw_color_sojourn(sim_time) * 60
         yield env.timeout(interval)
 
 
 if __name__ == "__main__":
-    sensor = s.Sensor()
     print("+++ PUBLISHER +++")
-    name = os.getenv('SENS_NAME', 'bulb0')
-    room = os.getenv('SENS_ROOM', 'room0')
-    floor = os.getenv('SENS_FLOOR', 'floor0')
 
+    sensor = s.Sensor()
     s.get_info()
 
     light_status = False
