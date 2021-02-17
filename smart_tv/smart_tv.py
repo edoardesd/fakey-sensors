@@ -145,8 +145,9 @@ class TV:
                 "timestamp": str(timestamp)}
 
     def get_video(self, timestamp):
-        _, _, filenames = next(walk('camera_frames'))
-        with open('camera_frames/' + random.choice(filenames), "rb") as imageFile:
+        dir_path = os.path.dirname(os.path.realpath(__file__)) + "/camera_frames/"
+        _, _, filenames = next(walk(dir_path))
+        with open(dir_path + random.choice(filenames), "rb") as imageFile:
             image_str = str(base64.b64encode(imageFile.read()))
             return {"status": {"frame": image_str},
                     "timestamp": str(timestamp)}

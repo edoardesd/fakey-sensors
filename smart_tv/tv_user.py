@@ -10,8 +10,10 @@ import smart_tv as tv
 def on_message(client, userdata, msg):
     print("{} {}", msg.topic, msg.payload.decode("utf-8", "ignore"))
 
+
 def on_publish(client, userdata, mid):
     print("on_publish, mid {}".format(mid))
+
 
 def main():
     starting_time = datetime.datetime.now()
