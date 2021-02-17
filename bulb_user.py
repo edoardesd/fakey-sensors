@@ -1,6 +1,5 @@
 import datetime
 import json
-import os
 import paho.mqtt.client as mqtt
 import random
 import simpy.rt

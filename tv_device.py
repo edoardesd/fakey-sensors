@@ -3,7 +3,7 @@ import json
 import paho.mqtt.client as mqtt
 import simpy.rt
 
-import camera as c
+import smart_tv as tv
 
 
 def publish_update(_client, _topic, _info):
@@ -19,6 +19,7 @@ def publish_frame(_client, _topic, _info):
     while True:
         sim_time = starting_time + datetime.timedelta(seconds=env.now)
         interval = sensor.get_rate()["interval"]
+        print(interval)
         if interval == 0:
             yield env.process(stop())
 
@@ -29,10 +30,10 @@ def publish_frame(_client, _topic, _info):
 
 
 def stop():
-    print("Camera turned OFF")
+    print("Television turned OFF")
     while sensor.get_rate()["interval"] == 0:
         pass
-    print("Turning ON the camera")
+    print("Turning ON the telly")
     yield env.timeout(1)
 
 
@@ -61,16 +62,16 @@ def main():
     client.loop_start()
 
     # start the simulation
-    env.run(until=float(c.SIM_DURATION))
+    env.run(until=float(tv.SIM_DURATION))
 
 
 if __name__ == "__main__":
     print("+++ SUBSCRIBER +++")
     starting_time = datetime.datetime.now()
     print("Simulation started at {}".format(starting_time))
-    env = simpy.rt.RealtimeEnvironment(factor=c.SIM_FACTOR, strict=False)
+    env = simpy.rt.RealtimeEnvironment(factor=tv.SIM_FACTOR, strict=False)
 
-    sensor = c.Camera()
+    sensor = tv.TV()
 
-    c.get_info()
+    tv.get_info()
     main()
