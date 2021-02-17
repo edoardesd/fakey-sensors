@@ -10,9 +10,9 @@ PORT = os.getenv('SENS_PORT', 1883)
 NAME = os.getenv('SENS_NAME', 'bulb0')
 ROOM = os.getenv('SENS_ROOM', 'room0')
 FLOOR = os.getenv('SENS_FLOOR', 'floor0')
-SIM_FACTOR = os.getenv('SIM_FACTOR', 0.1)
+SIM_FACTOR = os.getenv('SIM_FACTOR', 0.01)
 # for infinite duration use 'inf'
-SIM_DURATION = os.getenv('SIM_DURATION', 480)
+SIM_DURATION = os.getenv('SIM_DURATION', 'inf')
 
 T_PROFILE = os.getenv('T_PROFILE', 'busy')
 
@@ -124,9 +124,9 @@ class Sensor:
         self.port = PORT
         self.base_topic = base_topic
 
-        self.topic_passive = {'consumption': {'interval': 1000,
+        self.topic_passive = {'consumption': {'interval': 1000000,
                                               'return': self.get_consumption},
-                              'status': {'interval': 500,
+                              'status': {'interval': 50000,
                                          'return': self.get_status}}
 
         self.actions = actions
