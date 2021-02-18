@@ -1,4 +1,4 @@
-FROM python:3.10.0a5-alpine3.13
+FROM python:3.8-alpine3.12
 
 ENV SENS_BROKER=172.17.0.3
 ENV SENS_PORT=1883
@@ -10,6 +10,8 @@ ENV SIM_FACTOR=0.1
 ENV SIM_DURATION='inf'
 ENV T_PROFILE="busy"
 
+ADD repositories /etc/apk/repositories
+
 RUN apk add git \
     iputils \
     iproute2 \
@@ -17,7 +19,8 @@ RUN apk add git \
     iperf \
     xterm \
     busybox-extras \
-    bash
+    bash\
+    gfortran py-pip build-base py-numpy@community
 
 WORKDIR /home/device/
 

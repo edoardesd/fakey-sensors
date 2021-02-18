@@ -1,4 +1,4 @@
-FROM python:3.10.0a5-alpine3.13
+FROM python:3.8-alpine3.12
 
 ENV SENS_BROKER=172.17.0.3
 ENV SENS_PORT=1883
