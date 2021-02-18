@@ -24,7 +24,7 @@ def main():
     client.on_message = on_message
     client.on_publish = on_publish
 
-    client.connect(tv.BROKER)
+    client.connect(tv.BROKER, keepalive=600)
     print("Connected.")
 
     env.process(toggle_as_markov(env, client, starting_time))
@@ -32,6 +32,7 @@ def main():
     env.run(until=float(tv.SIM_DURATION))
 
     print("Simulation complete")
+    client.loop_start()
 
 
 def toggle_as_markov(env, _client, _ts):

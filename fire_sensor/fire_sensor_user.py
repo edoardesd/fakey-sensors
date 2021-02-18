@@ -18,7 +18,7 @@ def main():
     client = mqtt.Client(s.generate_ID())
     client.on_message = on_message
 
-    client.connect(s.BROKER)
+    client.connect(s.BROKER, keepalive=600)
     print("Connected.")
 
     env.process(toggle_as_markov(env, client, starting_time))
@@ -27,6 +27,7 @@ def main():
     env.run(until=float(s.SIM_DURATION))
 
     print("Simulation complete")
+    client.loop_start()
 
 
 def toggle_as_markov(env, _client, _ts):

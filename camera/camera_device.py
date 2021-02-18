@@ -46,7 +46,7 @@ def main():
     client.on_message = on_message
 
     print("connecting to the broker", sensor.broker)
-    client.connect(sensor.broker)
+    client.connect(sensor.broker, keepalive=600)
 
     for topic in sensor.actions.keys():
         client.subscribe(sensor.base_topic + 'action/' + topic)

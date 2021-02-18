@@ -17,12 +17,13 @@ def main():
     client = mqtt.Client(c.generate_ID())
     client.on_message = on_message
 
-    client.connect(c.BROKER)
+    client.connect(c.BROKER, keepalive=600)
     print("Connected.")
 
     env.process(toggle_as_markov(env, client, starting_time))
     env.run(until=float(c.SIM_DURATION))
 
+    client.loop_start()
     print("Simulation complete")
 
 

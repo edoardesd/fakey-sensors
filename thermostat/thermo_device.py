@@ -24,7 +24,7 @@ def main():
     print("Simulation started at {}".format(starting_time))
     env = simpy.rt.RealtimeEnvironment(factor=s.SIM_FACTOR)
 
-    client = mqtt.Client(sensor.client_id)
+    client = mqtt.Client(sensor.client_id, keepalive=600)
     client.on_message = on_message
 
     print("connecting to the broker", sensor.broker)

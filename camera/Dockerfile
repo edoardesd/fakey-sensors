@@ -20,7 +20,7 @@ RUN apk add git \
     xterm \
     busybox-extras \
     bash\
-    gfortran py-pip build-base py-numpy@community
+    py3-numpy lapack
 
 WORKDIR /home/device/
 
