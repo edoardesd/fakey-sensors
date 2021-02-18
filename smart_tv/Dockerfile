@@ -22,12 +22,9 @@ RUN apk add git \
 WORKDIR /home/device/
 
 RUN git clone "https://github.com/edoardesd/fakey-sensors.git"
-
-#COPY . /home/device/fakey-sensors/
-
 RUN pip install -r fakey-sensors/requirements.txt
 
-WORKDIR /home/device/fakey-sensors/bulb
+WORKDIR /home/device/fakey-sensors/smart_tv
 
 RUN chmod +x start.sh
 
