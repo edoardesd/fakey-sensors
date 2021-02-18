@@ -3,7 +3,6 @@ import random
 import string
 import datetime
 from random import randrange, triangular, gauss
-from numpy import sign
 
 BROKER = os.getenv('SENS_BROKER', 'localhost')
 PORT = os.getenv('SENS_PORT', 1883)
@@ -72,8 +71,9 @@ class Sensor:
             "humidity": 50}
 
     def temperature_simulation_engine(self):
+        drift_direction = -1 if self.status["desired_temp"] - self.status["current_temp"] < 0 else 1
         self.status["current_temp"] = self.status["current_temp"] + \
-                                      sign(self.status["desired_temp"] - self.status["current_temp"]) *\
+                                      drift_direction *\
                                       max(abs(self.status["desired_temp"] - self.status["current_temp"]) *
                                           temperature_variation_factor, temperature_variation_factor) + gauss(0, 0.3)
 
