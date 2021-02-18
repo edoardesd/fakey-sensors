@@ -10,10 +10,9 @@ PORT = os.getenv('SENS_PORT', 1883)
 NAME = os.getenv('SENS_NAME', 'camera0')
 ROOM = os.getenv('SENS_ROOM', 'room0')
 FLOOR = os.getenv('SENS_FLOOR', 'floor0')
-SIM_FACTOR = os.getenv('SIM_FACTOR', 0.01)
+SIM_FACTOR = float(os.getenv('SIM_FACTOR', 0.01))
 # for infinite duration use 'inf'
-SIM_DURATION = os.getenv('SIM_DURATION', 'inf')
-
+SIM_DURATION = float(os.getenv('SIM_DURATION', 'inf'))
 T_PROFILE = os.getenv('T_PROFILE', 'steady')
 
 base_topic = "crazy_building/{}/{}/{}/".format(

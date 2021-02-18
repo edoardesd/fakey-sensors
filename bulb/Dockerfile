@@ -1,13 +1,14 @@
 FROM python:3.10.0a5-alpine3.13
 
-ENV WS_PORT 8080
-ENV BROKER_PORT 1883
-ENV DISTRIBUTED_FLAG true
-ENV TOPOLOGY tree
-ENV CLUSTER_SIZE 7
-ENV BROKER_NUM 1
-ENV LOCAL_FLAG false
-ENV IP_ADDR 172.0.0.2
+ENV SENS_BROKER=172.17.0.3
+ENV SENS_PORT=1883
+ENV SENS_NAME="none0"
+ENV SENS_ROOM="none0"
+ENV SENS_FLOOR="none0"
+ENV SIM_FACTOR=0.1
+# for infinite duration use 'inf'
+ENV SIM_DURATION='inf'
+ENV T_PROFILE="busy"
 
 RUN apk add git \
     iputils \
@@ -15,14 +16,17 @@ RUN apk add git \
     net-tools \
     iperf \
     xterm \
-    busybox-extras
+    busybox-extras \
+    bash
 
-WORKDIR /home/device/
+#RUN git clone "https://github.com/edoardesd/fakey-sensors.git"
 
-RUN git clone "https://github.com/edoardesd/fakey-sensors.git"
+COPY . /home/device/fakey-sensors/
 
-RUN pip install -r fakey-sensors/requirements.txt
+WORKDIR /home/device/fakey-sensors
 
-RUN chmod +x /home/device/fakey-sensors/bulb/start.sh
+RUN pip install -r requirements.txt
 
-CMD ["/home/device/fakey-sensors/bulb/start.sh"]
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
