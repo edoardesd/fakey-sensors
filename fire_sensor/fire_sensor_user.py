@@ -103,5 +103,5 @@ if __name__ == "__main__":
     sensor = s.Sensor()
     s.get_info()
 
-    plug_status = False
-    main()
+    #plug_status = False
+    #main()
