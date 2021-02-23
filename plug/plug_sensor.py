@@ -13,22 +13,11 @@ SIM_FACTOR = float(os.getenv('SIM_FACTOR', 0.1))
 # for infinite duration use 'inf'
 SIM_DURATION = float(os.getenv('SIM_DURATION', 480))
 
-T_PROFILE = os.getenv('T_PROFILE', 'busy')
-
 base_topic = "crazy_building/{}/{}/{}/".format(
     FLOOR, ROOM, NAME)
 
 off_on_trans_rate = 10
 on_off_trans_rate = 10
-
-
-
-def gen_update_all(timestamp):
-    return {"status": {
-        "switch": 'ON',
-        "dim": random.randrange(0, 100),
-        "color": random.choice(COLORS)},
-        "timestamp": str(timestamp)}
 
 
 def turn_off(timestamp):
@@ -70,7 +59,8 @@ def draw_on_sojourn(timestamp):
     return expovariate(1 / on_off_trans_rate)
 
 
-actions = {"set_on": turn_on}
+actions = {"set_on": turn_on,
+           "set_off": turn_off}
 
 
 class Sensor:

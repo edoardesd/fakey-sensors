@@ -13,15 +13,13 @@ SIM_FACTOR = float(os.getenv('SIM_FACTOR', 0.1))
 # for infinite duration use 'inf'
 SIM_DURATION = float(os.getenv('SIM_DURATION', 480))
 
-T_PROFILE = os.getenv('T_PROFILE', 'busy')
-
 base_topic = "crazy_building/{}/{}/{}/".format(
     FLOOR, ROOM, NAME)
 
 hourly_temp = [20, 20, 20, 20, 20, 20, 20, 22, 22, 22, 21, 21, 21, 21, 21, 21,
                21, 21, 21, 21, 21, 21, 20, 20]
 
-temperature_variation_factor = 0.5;
+temperature_variation_factor = 0.5
 
 
 def set_temp(timestamp):

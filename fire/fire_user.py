@@ -3,7 +3,7 @@ import json
 import paho.mqtt.client as mqtt
 import random
 import simpy.rt
-import fire_sensor as s
+import fire as s
 
 
 def on_message(client, userdata, msg):

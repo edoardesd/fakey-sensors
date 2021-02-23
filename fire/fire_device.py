@@ -3,7 +3,7 @@ import json
 import paho.mqtt.client as mqtt
 import simpy.rt
 
-import fire_sensor as s
+import fire as s
 
 
 def publish_update(env, _client, _ts, _topic, _info):
