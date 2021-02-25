@@ -13,7 +13,7 @@ def on_message(client, userdata, msg):
 def main():
     starting_time = datetime.datetime.now()
     print("Simulation started at {}".format(starting_time))
-    env = simpy.rt.RealtimeEnvironment(factor=s.SIM_FACTOR)
+    env = simpy.rt.RealtimeEnvironment(factor=s.SIM_FACTOR, strict=False)
 
     client = mqtt.Client(s.generate_ID())
     client.on_message = on_message
