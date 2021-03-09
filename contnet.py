@@ -21,7 +21,7 @@ import shlex
 
 setLogLevel('info')
 
-FLOORS = 2
+FLOORS = 1
 SIM_FACTOR = 0.2
 SIM_DURATION = 'inf'
 CONTAINER_IMAGE = "antlabpolimi/fakey-sensors:latest"
@@ -55,6 +55,9 @@ spaces = {"room": room_devices,
 
 floor_spaces = {"room": 1,
                 "corridor": 1}
+
+attackers = {"quick_flood": 1}
+
 
 class Floor:
     def __init__(self, floor_id):
@@ -145,6 +148,9 @@ for floor in floors:
     for room in floor.get_rooms():
         net.addLink(floor.get_switch(), room.get_switch(), cls=TCLink, delay='1ms', bw=1)
 
+# TODO: add attackers
+for attack, num in attackers.items():
+    print(attack, num)
 
 info('*** Adding switches\n')
 broker_switch = net.addSwitch('b1')
@@ -164,7 +170,8 @@ net.pingAll()
 
 info('*** Get switch interfaces\n')
 net_interfaces = broker_switch.cmd("ls /sys/class/net/ | grep 'b1-'")
-net_interfaces = list(filter(None, net_interfaces.replace('\n', '').split('\r')))
+net_interfaces = \
+    list(filter(None, net_interfaces.replace('\n', '').split('\r')))
 print(net_interfaces)
 
 info('*** Starting tcpdump\n')
