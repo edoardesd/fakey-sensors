@@ -22,7 +22,7 @@ attack_topic = "crazy_building/{}/{}/{}/".format(
 def main():
     starting_time = datetime.datetime.now()
     print("Simulation started at {}".format(starting_time))
-    env = simpy.rt.RealtimeEnvironment(factor=SIM_FACTOR, strict=True)
+    env = simpy.rt.RealtimeEnvironment(factor=SIM_FACTOR, strict=False)
 
     client = mqtt.Client(generate_ID())
 

@@ -7,6 +7,7 @@ two switches, and one controller:
 (broker) - (s1) - (device_0)
          - s2 - device_floor1
 """
+import time
 
 from mininet.net import Containernet
 from mininet.node import Controller
@@ -21,10 +22,10 @@ import shlex
 
 setLogLevel('info')
 
-FLOORS = 1
+FLOORS = 0
 SIM_FACTOR = 0.2
 SIM_DURATION = 'inf'
-CONTAINER_IMAGE = "antlabpolimi/fakey-sensors:latest"
+CONTAINER_IMAGE = "antlabpolimi/fakey-sensors:attacks"
 BROKER_IMAGE = "flipperthedog/mosquitto-cnet:latest"
 path = os.getcwd()
 
@@ -34,18 +35,18 @@ ip_list.pop(0)
 
 room_devices = {
     "bulb": (2, "steady"),
-    "camera": (1, "steady"),
+    "camera": (1, "busy"),
     "fire": (1, "steady"),
-    "plug": (3, "busy"),
-    "smart_tv": (1, "steady"),
+    "plug": (5, "busy"),
+    "smart_tv": (1, "busy"),
     "thermo": (1, "busy")
 }
 
 corridor_devices = {
     "bulb": (3, "busy"),
-    "camera": (1, "steady"),
+    "camera": (1, "busy"),
     "fire": (1, "steady"),
-    "plug": (2, "steady"),
+    "plug": (3, "steady"),
     "smart_tv": (0, "steady"),
     "thermo": (1, "steady")
 }
@@ -53,10 +54,16 @@ corridor_devices = {
 spaces = {"room": room_devices,
           "corridor": corridor_devices}
 
-floor_spaces = {"room": 1,
-                "corridor": 1}
+floor_spaces = {"room": 0,
+                "corridor": 0}
 
-attackers = {"quick_flood": 1}
+attackers = {"quick": 0,
+             #"connect": 0,
+             "heavy": 1}
+
+attackers_ip = {"quick": "10.0.0.160",
+             "connect": 0,
+             "heavy": "10.0.0.162"}
 
 
 class Floor:
@@ -139,34 +146,55 @@ info('*** Adding docker broker using {}\n'.format(BROKER_IMAGE))
 d1 = net.addDocker('d1', ip='10.0.0.251', dimage=BROKER_IMAGE,
                    ports=[1883], port_bindings={1883: 1883})
 
-info('*** Building the building\n\n')
-info('*** Creating floors...\n')
-floors = [Floor(indx) for indx in range(0, FLOORS)]
+#info('*** Building the building\n\n')
+#info('*** Creating floors...\n')
+#floors = [Floor(indx) for indx in range(0, FLOORS)]
 
-for floor in floors:
+#for floor in floors:
     # link floor and rooms
-    for room in floor.get_rooms():
-        net.addLink(floor.get_switch(), room.get_switch(), cls=TCLink, delay='1ms', bw=1)
+#    for room in floor.get_rooms():
+#        net.addLink(floor.get_switch(), room.get_switch(), cls=TCLink, delay='1ms', bw=1)
 
-# TODO: add attackers
+info('*** Creating attackzzz...\n')
+
+attack_cont = list()
 for attack, num in attackers.items():
-    print(attack, num)
+    a = net.addDocker(attack, ip=attackers_ip[attack], dimage=CONTAINER_IMAGE,
+                      environment={
+                          "SENS_BROKER": "10.0.0.251",
+                          "SENS_PORT": 1883,
+                          "DEVICE": "attack",
+                          "SENS_ROOM": "attack_room",
+                          "SENS_FLOOR": "everywhere",
+                          "SIM_FACTOR": SIM_FACTOR,
+                          "SIM_DURATION": SIM_DURATION,
+                          "ATTACK_NAME": attack}
+                      )
+    attack_cont.append(a)
+
 
 info('*** Adding switches\n')
 broker_switch = net.addSwitch('b1')
+s_att = net.addSwitch('s666')
 
 info('*** Creating links\n')
-net.addLink(d1, broker_switch)
+print(net.addLink(d1, broker_switch))
 
-for floor in floors:
-    info('\n', net.addLink(broker_switch, floor.get_switch()))
+# switch - attacker link
+for att in attack_cont:
+    print(net.addLink(s_att, att, cls=TCLink, delay="1ms", bw=1))
 
+# floor - broker links
+#for floor in floors:
+#    print(net.addLink(broker_switch, floor.get_switch()))
+
+# broker - attacker link
+info('\n', net.addLink(broker_switch, s_att))
 
 info('*** Starting network\n')
 net.start()
 info('*** Testing connectivity\n')
 net.pingAll()
-
 
 info('*** Get switch interfaces\n')
 net_interfaces = broker_switch.cmd("ls /sys/class/net/ | grep 'b1-'")
@@ -177,7 +205,8 @@ print(net_interfaces)
 info('*** Starting tcpdump\n')
 tcp_pids = []
 for eth in net_interfaces:
-    cmd_tcpdump = "tcpdump -i {eth} -w {folder}/experiments/{eth}.pcap -q".format(eth=eth, folder=os.path.expanduser(path))
+    cmd_tcpdump = "tcpdump -i {eth} -w {folder}/experiments/{eth}.pcap -q".format(eth=eth,
+                                                                                  folder=os.path.expanduser(path))
     print(cmd_tcpdump)
     tcp_pids.append(subprocess.Popen(shlex.split(cmd_tcpdump), stderr=subprocess.DEVNULL))
 
@@ -186,18 +215,23 @@ print(tcp_pids)
 info('*** Killing docker net interface\n')
 d1.cmd("ip link set eth0 down")
 
-for floor in floors:
-    for room in floor.get_rooms():
-        for dev in room.get_sensors():
-            dev.cmd("ip link set eth0 down")
+# for floor in floors:
+#     for room in floor.get_rooms():
+#         for dev in room.get_sensors():
+#             dev.cmd("ip link set eth0 down")
 
 info('*** Starting the entrypoints\n')
 d1.start()
 
-for floor in floors:
-    for room in floor.get_rooms():
-        for dev in room.get_sensors():
-            dev.start()
+time.sleep(5)
+# for floor in floors:
+#     for room in floor.get_rooms():
+#         for dev in room.get_sensors():
+#             dev.start()
+#             time.sleep(1)
+
+for att in attack_cont:
+    att.start()
 
 info('*** Running CLI\n')
 CLI(net)
@@ -208,4 +242,3 @@ for pid in tcp_pids:
 
 info('*** Stopping network\n')
 net.stop()
-
