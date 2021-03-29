@@ -47,7 +47,7 @@ def quick_flood_attack(env, cli):
         while True:
             cli.publish(attack_topic, retain=True, payload='DIE!!!!')
             i += 1
-            yield env.timeout(0.000000001)
+            yield env.timeout(0.001)
     except simpy.Interrupt:
         print("Attack Interrupted, {} pub. sent".format(i))
 
